@@ -4,11 +4,7 @@
 
 int main(int argc, char* argv[]) {
     Engine* engine = create_engine();
-    if (!engine) {
-        fprintf(stderr, "Failed to allocate memory for engine\n");
-        return 1;
-    }
-    
+
     if (engine->initialize(engine, "Application", 800, 600)) {
         engine->loop(engine);
         engine->shutdown(engine);
