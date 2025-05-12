@@ -1,12 +1,46 @@
 #include "engine.h"
 #include <stdio.h>
 
-bool engine_initialize(Engine* engine, const char* title, int width, int height) {
+void shutdown(Engine* engine) {
+    if (engine->renderer) {
+        SDL_DestroyRenderer(engine->renderer);
+    }
+    if (engine->window) {
+        SDL_DestroyWindow(engine->window);
+    }
+    SDL_Quit();
+}
+
+bool loop(Engine* engine) {
+    SDL_Event event;
+    
+    while (engine->running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                engine->running = false;
+            }
+        }
+        
+        SDL_SetRenderDrawColor(engine->renderer, 0, 0, 0, 255);
+        SDL_RenderClear(engine->renderer);
+        
+        // Scene rendering here...
+
+        SDL_RenderPresent(engine->renderer);
+    }
+    
+    return true;
+}
+
+bool initialize(Engine* engine, const char* title, int width, int height) {
     engine->running = true;
     engine->window = NULL;
     engine->renderer = NULL;
     engine->window_width = width;
     engine->window_height = height;
+    engine->initialize = initialize;
+    engine->shutdown = shutdown;
+    engine->loop = loop;
     
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -42,33 +76,16 @@ bool engine_initialize(Engine* engine, const char* title, int width, int height)
     return true;
 }
 
-void engine_shutdown(Engine* engine) {
-    if (engine->renderer) {
-        SDL_DestroyRenderer(engine->renderer);
-    }
-    if (engine->window) {
-        SDL_DestroyWindow(engine->window);
-    }
-    SDL_Quit();
-}
-
-bool engine_main_loop(Engine* engine) {
-    SDL_Event event;
-    
-    while (engine->running) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                engine->running = false;
-            }
-        }
-        
-        SDL_SetRenderDrawColor(engine->renderer, 0, 0, 0, 255);
-        SDL_RenderClear(engine->renderer);
-        
-        // Scene rendering here...
-
-        SDL_RenderPresent(engine->renderer);
+Engine* create_engine() {
+    Engine* engine = malloc(sizeof(Engine));
+    if (!engine) {
+        fprintf(stderr, "Failed to allocate memory for engine\n");
+        return NULL;
     }
     
-    return true;
+    engine->initialize = initialize;
+    engine->shutdown = shutdown;
+    engine->loop = loop;
+    
+    return engine;
 }
